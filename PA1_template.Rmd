@@ -5,21 +5,116 @@ output:
     keep_md: true
 ---
 
+```{r set_options}
+# set global options
+library(knitr)
+opts_chunk$set(echo = TRUE, message = FALSE,  warning = FALSE, comment = NA, tidy = FALSE, fig.path = "figure/", fig.keep = "high", fig.width = 8, fig.height = 5, fig.align = "center")
+
+# load required packages
+library(dplyr, quietly=TRUE, warn.conflicts=FALSE)
+library(ggplot2, quietly=TRUE, warn.conflicts=FALSE)
+library(data.table, quietly=TRUE, warn.conflicts=FALSE)
+```
 
 ## Loading and preprocessing the data
 
+Now we load the data into memory, and assign the appropriate classes to the columns.
+
+```{r loading_data}
+
+activity <- read.csv("activity.csv", header = T, colClasses = c("numeric", "Date", "numeric"))
+```
 
 
 ## What is mean total number of steps taken per day?
 
+1) We first calculate the total number of steps taken per day (using `dplyr`).
+
+```{r steps_per_day}
+steps_per_day <- activity %>% filter(!is.na(steps)) %>% group_by(date) %>% summarise(nsteps = sum(steps))
+```
+
+2) Then we plot a histogram for the total number of steps taken per day.
+
+```{r plot_steps_per_day, tidy = TRUE}
+ggplot(steps_per_day, aes(x = nsteps)) + geom_histogram(col = "black", fill = "#FF9999", binwidth = 500) + xlab("Number of steps") + ylab("Frequency") + ggtitle("Distribution of total number of steps per day")
+```
+
+3) Let's calculate the mean and median total number of steps taken per day:
+
+```{r, statistics_steps_per_day}
+stepmean <- round(mean(steps_per_day$nsteps),2)
+stepmedian <- round(median(steps_per_day$nsteps), 2)
+paste("Steps mean is ", stepmean, " and steps median is ", stepmedian)
+```
 
 
 ## What is the average daily activity pattern?
 
+1) At first, we summarize the data by interval accross all 53 days.
+
+```{r daily_pattern}
+daily_pattern <- activity %>% filter(!is.na(steps)) %>% group_by(interval) %>% summarise(avgsteps = mean(steps) )
+```
+
+2) Make a time series plot of mean steps per interval.
+
+```{r plot_daily_pattern, tidy = TRUE}
+ggplot(daily_pattern, aes(interval, avgsteps)) + geom_line(color= "#FF6666") + xlab("Interval") + ylab("Average number of steps") + ggtitle("Average daily activity pattern")
+```
+
+3) Find the interval with the maximum number of steps:
+
+```{r statistics_daily_pattern}
+daily_pattern[with(daily_pattern, avgsteps == max(avgsteps)),]$interval
+```
 
 
 ## Imputing missing values
 
+1) In the original data set, the total number of step measurements that are NA is:
+
+```{r summarize_NA}
+sum(is.na(activity$steps))
+```
+
+2) Then, we fill the missing values using the median for each corresponding 5-minute interval.
+
+```{r fill_data}
+activity <- as.data.table(activity)
+activity2 <- activity[, steps:=ifelse(is.na(.SD$steps), median(.SD$steps, na.rm = T), .SD$steps), interval]
+```
+
+3) Next, let's explore the effect of imputing missing values in the distribution of total daily number of steps, and its mean and median.
+
+```{r hist_of_filling_data, tidy = TRUE}
+steps_per_day_noNA <- activity2 %>% group_by(date) %>% summarise(nsteps = sum(steps))
+
+ggplot(steps_per_day_noNA, aes(x = nsteps)) + geom_histogram(col = "black", fill = "#FF9999", binwidth = 500) + xlab("Number of steps") + ylab("Frequency") + ggtitle("Distribution of total number of steps per day (imputed data)")
+
+paste("steps mean is ", round(mean(steps_per_day_noNA$nsteps), 2), 
+      " and steps median is ", round( median(steps_per_day_noNA$nsteps), 2))
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+1) Firstly, we create a variable (`daytype`) with two levels – “weekday” and “weekend”.
+
+```{r weekday_and_weekend_pattern}
+temp <- Sys.setlocale("LC_TIME", "C")
+wkdays <- weekdays(activity2$date, abbreviate = T)
+daytype <- ifelse(wkdays %in% c("Sat", "Sun"), "Weekend", "Weekday" )
+activity2$daytype <- as.factor(daytype)
+```
+
+2) Then we calculate the average number of steps for each interval and type
+of day.
+
+```{r plot_eekday_and_weekend_pattern, tidy = TRUE}
+
+weektype = activity2 %>% group_by(daytype, interval) %>% summarise(mean = mean(steps))
+
+ggplot(weektype, aes(interval, mean, color = daytype)) + geom_line() + facet_wrap(~daytype, ncol=1) + xlab("Interval") + ylab("Average number of steps") + ggtitle("Average weekday and weekend activity pattern")
+
+```
