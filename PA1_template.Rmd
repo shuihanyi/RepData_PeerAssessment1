@@ -5,6 +5,7 @@ output:
     keep_md: true
 ---
 
+
 ```{r set_options}
 # set global options
 library(knitr)
@@ -15,6 +16,7 @@ library(dplyr, quietly=TRUE, warn.conflicts=FALSE)
 library(ggplot2, quietly=TRUE, warn.conflicts=FALSE)
 library(data.table, quietly=TRUE, warn.conflicts=FALSE)
 ```
+
 
 ## Loading and preprocessing the data
 
@@ -113,7 +115,7 @@ of day.
 
 ```{r plot_eekday_and_weekend_pattern, tidy = TRUE}
 
-weektype = activity2 %>% group_by(daytype, interval) %>% summarise(mean = mean(steps))
+weektype <- activity2 %>% group_by(daytype, interval) %>% summarise(mean = mean(steps))
 
 ggplot(weektype, aes(interval, mean, color = daytype)) + geom_line() + facet_wrap(~daytype, ncol=1) + xlab("Interval") + ylab("Average number of steps") + ggtitle("Average weekday and weekend activity pattern")
 
