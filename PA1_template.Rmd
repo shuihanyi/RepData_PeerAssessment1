@@ -1,10 +1,9 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
 output: 
-  html_document:
+html_document:
     keep_md: true
 ---
-
 
 ```{r set_options}
 # set global options
@@ -16,7 +15,6 @@ library(dplyr, quietly=TRUE, warn.conflicts=FALSE)
 library(ggplot2, quietly=TRUE, warn.conflicts=FALSE)
 library(data.table, quietly=TRUE, warn.conflicts=FALSE)
 ```
-
 
 ## Loading and preprocessing the data
 
@@ -101,7 +99,7 @@ paste("steps mean is ", round(mean(steps_per_day_noNA$nsteps), 2),
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-1) Firstly, we create a variable (`daytype`) with two levels ‚Äì ‚Äúweekday‚Äù and ‚Äúweekend‚Äù.
+1) Firstly, we create a variable (`daytype`) with two levels ®C °∞weekday°± and °∞weekend°±.
 
 ```{r weekday_and_weekend_pattern}
 temp <- Sys.setlocale("LC_TIME", "C")
